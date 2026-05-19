@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Heart, 
   Home, 
@@ -23,13 +23,34 @@ export default function App() {
   const [completedPillars, setCompletedPillars] = useState<string[]>([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // Daily Reset Logic
+  useEffect(() => {
+    const today = new Date().toLocaleDateString();
+    const lastSessionDate = localStorage.getItem('last_session_date');
+
+    if (lastSessionDate !== today) {
+      // It's a new day! Reset progress-related data
+      localStorage.removeItem('completed_pillars');
+      setCompletedPillars([]);
+      localStorage.setItem('last_session_date', today);
+    } else {
+      // Load saved progress for today
+      const savedProgress = localStorage.getItem('completed_pillars');
+      if (savedProgress) {
+        setCompletedPillars(JSON.parse(savedProgress));
+      }
+    }
+  }, []);
+
   const handlePilarSelect = (pilar: Pillar) => {
     setSelectedPilar(pilar);
   };
 
   const handlePilarComplete = (pilarId: string) => {
     if (!completedPillars.includes(pilarId)) {
-      setCompletedPillars(prev => [...prev, pilarId]);
+      const updated = [...completedPillars, pilarId];
+      setCompletedPillars(updated);
+      localStorage.setItem('completed_pillars', JSON.stringify(updated));
     }
   };
 
@@ -73,6 +94,7 @@ export default function App() {
                   <button
                     onClick={() => {
                       setCompletedPillars([]);
+                      localStorage.removeItem('completed_pillars');
                       setIsMenuOpen(false);
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-rose-50 hover:text-rose-600 transition-colors text-left"
